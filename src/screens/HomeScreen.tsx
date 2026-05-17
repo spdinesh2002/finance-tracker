@@ -7,11 +7,12 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
-import { Finance, fetchFinances } from '../api';
+import { Finance, fetchFinances, deleteFinanceRecord } from '../api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -61,11 +62,23 @@ export default function HomeScreen({ navigation }: Props) {
         ListEmptyComponent={<View style={styles.empty}><Text style={styles.emptyText}>No records yet</Text><Text style={styles.emptySubtext}>Tap + to add a finance entry</Text></View>}
         renderItem={({ item }) => {
           const closed = item.status === 'closed';
+          const handleDelete = () => {
+            Alert.alert('Delete', `Delete finance record for "${item.name}"?`, [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Delete', style: 'destructive', onPress: async () => {
+                await deleteFinanceRecord(item.id);
+                loadData();
+              }},
+            ]);
+          };
           return (
             <TouchableOpacity style={[styles.card, closed && styles.cardClosed]} onPress={() => navigation.navigate('Detail', { id: item.id })}>
               <View style={styles.cardHeader}>
                 <Text style={styles.name}>{item.name}</Text>
-                <View style={[styles.badge, closed ? styles.badgeClosed : styles.badgeActive]}><Text style={styles.badgeText}>{closed ? 'CLOSED' : 'ACTIVE'}</Text></View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={[styles.badge, closed ? styles.badgeClosed : styles.badgeActive]}><Text style={styles.badgeText}>{closed ? 'CLOSED' : 'ACTIVE'}</Text></View>
+                  <TouchableOpacity onPress={handleDelete} style={styles.deleteIcon}><Text style={styles.deleteIconText}>✕</Text></TouchableOpacity>
+                </View>
               </View>
               <View style={styles.cardRow}><Text style={styles.label}>Debt Date</Text><Text style={styles.value}>{fmtDate(item.debt_date)}</Text></View>
               <View style={styles.cardRow}><Text style={styles.label}>Remaining Principal</Text><Text style={styles.value}>{fmt(item.remaining_principal)}</Text></View>
@@ -99,6 +112,8 @@ const styles = StyleSheet.create({
   badgeActive: { backgroundColor: '#e94560' },
   badgeClosed: { backgroundColor: '#4ecca3' },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  deleteIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#2a1525', justifyContent: 'center', alignItems: 'center' },
+  deleteIconText: { color: '#e94560', fontSize: 14, fontWeight: '700' },
   cardRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
   label: { color: '#888', fontSize: 13 },
   value: { color: '#fff', fontSize: 14, fontWeight: '600' },
