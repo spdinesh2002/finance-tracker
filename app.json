@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Finance Tracker",
+    "slug": "finance-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.financetracker.app"
+    },
+    "android": {
+      "package": "com.financetracker.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "experiments": {
+      "baseUrl": "/finance-tracker"
+    }
+  }
+}
