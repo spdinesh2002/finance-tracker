@@ -91,3 +91,23 @@ export async function updateFinance(
 export async function deleteFinanceRecord(id: string): Promise<void> {
   return request(`/finances/${id}`, { method: 'DELETE' });
 }
+
+export async function updatePayment(
+  financeId: string,
+  paymentId: string,
+  data: { to_interest: number; to_principal: number }
+): Promise<Finance> {
+  return request(`/finances/${financeId}/payments/${paymentId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deletePayment(
+  financeId: string,
+  paymentId: string
+): Promise<Finance> {
+  return request(`/finances/${financeId}/payments/${paymentId}`, {
+    method: 'DELETE',
+  });
+}

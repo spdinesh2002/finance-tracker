@@ -216,6 +216,103 @@ app.put('/api/finances/:id', async (req, res) => {
   }
 });
 
+// ─── PUT /api/finances/:fid/payments/:pid ───
+app.put('/api/finances/:fid/payments/:pid', async (req, res) => {
+  try {
+    const finResult = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [req.params.fid] });
+    if (finResult.rows.length === 0) return res.status(404).json({ error: 'Finance record not found' });
+    const finance = finResult.rows[0];
+
+    const payResult = await db.execute({ sql: 'SELECT * FROM payments WHERE id = ? AND finance_id = ?', args: [req.params.pid, req.params.fid] });
+    if (payResult.rows.length === 0) return res.status(404).json({ error: 'Payment not found' });
+    const oldPayment = payResult.rows[0];
+
+    const { to_interest = 0, to_principal = 0 } = req.body;
+    if (to_interest <= 0 && to_principal <= 0) {
+      return res.status(400).json({ error: 'Enter at least one payment amount' });
+    }
+
+    // Reverse old payment effect
+    const revertedPrincipal = Math.round((finance.remaining_principal + oldPayment.to_principal) * 100) / 100;
+    const revertedInterestPaid = Math.round((finance.total_interest_paid - oldPayment.to_interest) * 100) / 100;
+    const revertedPrincipalPaid = Math.round((finance.total_principal_paid - oldPayment.to_principal) * 100) / 100;
+
+    // Validate new amounts against reverted state
+    if (to_principal > revertedPrincipal + 0.01) {
+      return res.status(400).json({ error: `Remaining principal after reverting is only ${revertedPrincipal.toFixed(2)}` });
+    }
+
+    // Apply new payment
+    const newRemainingPrincipal = Math.round((revertedPrincipal - to_principal) * 100) / 100;
+    const newTotalInterestPaid = Math.round((revertedInterestPaid + to_interest) * 100) / 100;
+    const newTotalPrincipalPaid = Math.round((revertedPrincipalPaid + to_principal) * 100) / 100;
+    const totalAmount = Math.round((to_interest + to_principal) * 100) / 100;
+
+    // Update finance record
+    await db.execute({
+      sql: `UPDATE finances SET
+              remaining_principal = ?,
+              total_interest_paid = ?,
+              total_principal_paid = ?
+            WHERE id = ?`,
+      args: [newRemainingPrincipal, newTotalInterestPaid, newTotalPrincipalPaid, finance.id],
+    });
+
+    // Update payment record
+    await db.execute({
+      sql: `UPDATE payments SET amount = ?, to_interest = ?, to_principal = ? WHERE id = ?`,
+      args: [totalAmount, Math.round(to_interest * 100) / 100, Math.round(to_principal * 100) / 100, oldPayment.id],
+    });
+
+    const updated = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [finance.id] });
+    const payments = await db.execute({ sql: 'SELECT * FROM payments WHERE finance_id = ? ORDER BY date DESC', args: [finance.id] });
+    res.json({ ...enrichWithInterest(updated.rows[0]), payments: payments.rows });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to update payment' });
+  }
+});
+
+// ─── DELETE /api/finances/:fid/payments/:pid ───
+app.delete('/api/finances/:fid/payments/:pid', async (req, res) => {
+  try {
+    const finResult = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [req.params.fid] });
+    if (finResult.rows.length === 0) return res.status(404).json({ error: 'Finance record not found' });
+    const finance = finResult.rows[0];
+
+    const payResult = await db.execute({ sql: 'SELECT * FROM payments WHERE id = ? AND finance_id = ?', args: [req.params.pid, req.params.fid] });
+    if (payResult.rows.length === 0) return res.status(404).json({ error: 'Payment not found' });
+    const payment = payResult.rows[0];
+
+    // Reverse payment effect on finance record
+    const newRemainingPrincipal = Math.round((finance.remaining_principal + payment.to_principal) * 100) / 100;
+    const newTotalInterestPaid = Math.round((finance.total_interest_paid - payment.to_interest) * 100) / 100;
+    const newTotalPrincipalPaid = Math.round((finance.total_principal_paid - payment.to_principal) * 100) / 100;
+
+    // If record was closed, reopen it
+    await db.execute({
+      sql: `UPDATE finances SET
+              remaining_principal = ?,
+              total_interest_paid = ?,
+              total_principal_paid = ?,
+              status = 'active',
+              closed_date = NULL
+            WHERE id = ?`,
+      args: [newRemainingPrincipal, newTotalInterestPaid, newTotalPrincipalPaid, finance.id],
+    });
+
+    // Delete the payment
+    await db.execute({ sql: 'DELETE FROM payments WHERE id = ?', args: [payment.id] });
+
+    const updated = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [finance.id] });
+    const payments = await db.execute({ sql: 'SELECT * FROM payments WHERE finance_id = ? ORDER BY date DESC', args: [finance.id] });
+    res.json({ ...enrichWithInterest(updated.rows[0]), payments: payments.rows });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to delete payment' });
+  }
+});
+
 // ─── DELETE /api/finances/:id ───
 app.delete('/api/finances/:id', async (req, res) => {
   try {

@@ -8,6 +8,7 @@ import AddFinanceScreen from './src/screens/AddFinanceScreen';
 import DetailScreen from './src/screens/DetailScreen';
 import AddPaymentScreen from './src/screens/AddPaymentScreen';
 import EditFinanceScreen from './src/screens/EditFinanceScreen';
+import EditPaymentScreen from './src/screens/EditPaymentScreen';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -15,6 +16,7 @@ export type RootStackParamList = {
   Detail: { id: string };
   AddPayment: { id: string };
   EditFinance: { id: string };
+  EditPayment: { financeId: string; paymentId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -77,6 +79,14 @@ export default function App() {
           component={EditFinanceScreen}
           options={({ navigation }) => ({
             title: 'Edit Entry',
+            headerRight: () => <HomeButton onPress={() => navigation.navigate('Home')} />,
+          })}
+        />
+        <Stack.Screen
+          name="EditPayment"
+          component={EditPaymentScreen}
+          options={({ navigation }) => ({
+            title: 'Edit Payment',
             headerRight: () => <HomeButton onPress={() => navigation.navigate('Home')} />,
           })}
         />

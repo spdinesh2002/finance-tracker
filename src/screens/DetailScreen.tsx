@@ -5,7 +5,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
-import { Finance, fetchFinance, deleteFinanceRecord } from '../api';
+import { Finance, fetchFinance, deleteFinanceRecord, deletePayment } from '../api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Detail'>;
 
@@ -67,7 +67,27 @@ export default function DetailScreen({ route, navigation }: Props) {
             <View key={p.id} style={styles.paymentCard}>
               <View style={styles.paymentHeader}>
                 <Text style={styles.paymentDate}>{fmtDate(p.date)}</Text>
-                <Text style={styles.paymentTotal}>{fmt(p.amount)}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Text style={styles.paymentTotal}>{fmt(p.amount)}</Text>
+                  <TouchableOpacity style={styles.payEditBtn} onPress={() => navigation.navigate('EditPayment', { financeId: finance.id, paymentId: p.id })}>
+                    <Text style={styles.payEditText}>✎</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.payDeleteBtn} onPress={() => {
+                    Alert.alert('Delete Payment', `Delete this payment of ${fmt(p.amount)}?`, [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Delete', style: 'destructive', onPress: async () => {
+                        try {
+                          await deletePayment(finance.id, p.id);
+                          setLoading(true);
+                          setFinance(await fetchFinance(id));
+                          setLoading(false);
+                        } catch (e: any) { Alert.alert('Error', e.message); }
+                      }},
+                    ]);
+                  }}>
+                    <Text style={styles.payDeleteText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               <View style={styles.paymentBreakdown}>
                 {p.to_interest > 0 && <Text style={styles.breakdownText}>Interest: {fmt(p.to_interest)}</Text>}
@@ -123,6 +143,10 @@ const styles = StyleSheet.create({
   paymentTotal: { color: '#fff', fontSize: 15, fontWeight: '700' },
   paymentBreakdown: { flexDirection: 'row', gap: 16 },
   breakdownText: { color: '#888', fontSize: 12 },
+  payEditBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center' },
+  payEditText: { color: '#4ecca3', fontSize: 14, fontWeight: '700' },
+  payDeleteBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#2a1525', justifyContent: 'center', alignItems: 'center' },
+  payDeleteText: { color: '#e94560', fontSize: 12, fontWeight: '700' },
   deleteBtn: { borderWidth: 1, borderColor: '#e94560', borderRadius: 10, padding: 14, alignItems: 'center' },
   deleteBtnText: { color: '#e94560', fontSize: 14, fontWeight: '600' },
 });
