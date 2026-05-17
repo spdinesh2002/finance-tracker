@@ -33,10 +33,18 @@ async function initDB() {
       amount REAL NOT NULL,
       to_interest REAL DEFAULT 0,
       to_principal REAL DEFAULT 0,
+      description TEXT DEFAULT '',
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (finance_id) REFERENCES finances(id) ON DELETE CASCADE
     )
   `);
+
+  // Migration: add description column if missing (existing tables)
+  try {
+    await db.execute(`ALTER TABLE payments ADD COLUMN description TEXT DEFAULT ''`);
+  } catch (e) {
+    // Column already exists, ignore
+  }
 }
 
 module.exports = { db, initDB };

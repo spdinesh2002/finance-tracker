@@ -20,6 +20,8 @@ export default function EditPaymentScreen({ route, navigation }: Props) {
 
   const [intAmt, setIntAmt] = useState('');
   const [prinAmt, setPrinAmt] = useState('');
+  const [description, setDescription] = useState('');
+  const [payDate, setPayDate] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -32,6 +34,8 @@ export default function EditPaymentScreen({ route, navigation }: Props) {
           setPayment(p);
           setIntAmt(p.to_interest > 0 ? String(p.to_interest) : '');
           setPrinAmt(p.to_principal > 0 ? String(p.to_principal) : '');
+          setDescription(p.description || '');
+          setPayDate(p.date.split('T')[0]);
         }
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
@@ -44,7 +48,9 @@ export default function EditPaymentScreen({ route, navigation }: Props) {
 
   const hasChanges =
     (intAmt !== (payment.to_interest > 0 ? String(payment.to_interest) : '')) ||
-    (prinAmt !== (payment.to_principal > 0 ? String(payment.to_principal) : ''));
+    (prinAmt !== (payment.to_principal > 0 ? String(payment.to_principal) : '')) ||
+    (description !== (payment.description || '')) ||
+    (payDate !== payment.date.split('T')[0]);
 
   const handleSave = async () => {
     const ti = parseFloat(intAmt) || 0;
@@ -54,10 +60,14 @@ export default function EditPaymentScreen({ route, navigation }: Props) {
       Alert.alert('Error', 'Enter at least one amount');
       return;
     }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(payDate)) {
+      Alert.alert('Error', 'Enter date as YYYY-MM-DD');
+      return;
+    }
 
     setSaving(true);
     try {
-      await updatePayment(financeId, paymentId, { to_interest: ti, to_principal: tp });
+      await updatePayment(financeId, paymentId, { to_interest: ti, to_principal: tp, description: description.trim(), date: payDate });
       navigation.goBack();
     } catch (e: any) {
       Alert.alert('Error', e.message);
@@ -97,7 +107,27 @@ export default function EditPaymentScreen({ route, navigation }: Props) {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>New Amounts</Text>
+        <Text style={styles.sectionTitle}>Edit Details</Text>
+
+        <Text style={styles.label}>Payment Date</Text>
+        <TextInput
+          style={styles.input}
+          value={payDate}
+          onChangeText={setPayDate}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor="#555"
+        />
+
+        <Text style={styles.label}>Description</Text>
+        <TextInput
+          style={styles.input}
+          value={description}
+          onChangeText={setDescription}
+          placeholder="e.g. Cash payment, Bank transfer..."
+          placeholderTextColor="#555"
+        />
+
+        <Text style={styles.sectionTitle}>Amounts</Text>
 
         <Text style={styles.label}>Interest Payment (₹)</Text>
         <TextInput

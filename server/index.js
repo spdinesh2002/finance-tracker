@@ -102,7 +102,7 @@ app.post('/api/finances/:id/payments', async (req, res) => {
 
     if (finance.status === 'closed') return res.status(400).json({ error: 'This record is already closed' });
 
-    const { to_interest = 0, to_principal = 0 } = req.body;
+    const { to_interest = 0, to_principal = 0, description = '', date: customDate } = req.body;
     if (to_interest <= 0 && to_principal <= 0) {
       return res.status(400).json({ error: 'Enter at least one payment amount' });
     }
@@ -120,6 +120,7 @@ app.post('/api/finances/:id/payments', async (req, res) => {
     const actualPrincipal = Math.min(to_principal, finance.remaining_principal);
     const totalAmount = Math.round((actualInterest + actualPrincipal) * 100) / 100;
     const now = new Date().toISOString();
+    const paymentDate = customDate ? new Date(customDate).toISOString() : now;
     const paymentId = genId();
 
     const newRemainingPrincipal = Math.round((finance.remaining_principal - actualPrincipal) * 100) / 100;
@@ -149,9 +150,9 @@ app.post('/api/finances/:id/payments', async (req, res) => {
     });
 
     await db.execute({
-      sql: `INSERT INTO payments (id, finance_id, date, amount, to_interest, to_principal)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-      args: [paymentId, finance.id, now, totalAmount, Math.round(actualInterest * 100) / 100, Math.round(actualPrincipal * 100) / 100],
+      sql: `INSERT INTO payments (id, finance_id, date, amount, to_interest, to_principal, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [paymentId, finance.id, paymentDate, totalAmount, Math.round(actualInterest * 100) / 100, Math.round(actualPrincipal * 100) / 100, (description || '').trim()],
     });
 
     const updated = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [finance.id] });
@@ -227,7 +228,7 @@ app.put('/api/finances/:fid/payments/:pid', async (req, res) => {
     if (payResult.rows.length === 0) return res.status(404).json({ error: 'Payment not found' });
     const oldPayment = payResult.rows[0];
 
-    const { to_interest = 0, to_principal = 0 } = req.body;
+    const { to_interest = 0, to_principal = 0, description, date: customDate } = req.body;
     if (to_interest <= 0 && to_principal <= 0) {
       return res.status(400).json({ error: 'Enter at least one payment amount' });
     }
@@ -247,6 +248,8 @@ app.put('/api/finances/:fid/payments/:pid', async (req, res) => {
     const newTotalInterestPaid = Math.round((revertedInterestPaid + to_interest) * 100) / 100;
     const newTotalPrincipalPaid = Math.round((revertedPrincipalPaid + to_principal) * 100) / 100;
     const totalAmount = Math.round((to_interest + to_principal) * 100) / 100;
+    const paymentDate = customDate ? new Date(customDate).toISOString() : oldPayment.date;
+    const desc = description !== undefined ? (description || '').trim() : (oldPayment.description || '');
 
     // Update finance record
     await db.execute({
@@ -260,8 +263,8 @@ app.put('/api/finances/:fid/payments/:pid', async (req, res) => {
 
     // Update payment record
     await db.execute({
-      sql: `UPDATE payments SET amount = ?, to_interest = ?, to_principal = ? WHERE id = ?`,
-      args: [totalAmount, Math.round(to_interest * 100) / 100, Math.round(to_principal * 100) / 100, oldPayment.id],
+      sql: `UPDATE payments SET amount = ?, to_interest = ?, to_principal = ?, description = ?, date = ? WHERE id = ?`,
+      args: [totalAmount, Math.round(to_interest * 100) / 100, Math.round(to_principal * 100) / 100, desc, paymentDate, oldPayment.id],
     });
 
     const updated = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [finance.id] });

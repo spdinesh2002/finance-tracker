@@ -20,6 +20,8 @@ export default function AddPaymentScreen({ route, navigation }: Props) {
   const [intAmt, setIntAmt] = useState('');
   const [prinAmt, setPrinAmt] = useState('');
   const [totalAmt, setTotalAmt] = useState('');
+  const [description, setDescription] = useState('');
+  const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -36,8 +38,10 @@ export default function AddPaymentScreen({ route, navigation }: Props) {
     else if (ptype === 'principal') { tp = parseFloat(totalAmt); if (isNaN(tp) || tp <= 0) { Alert.alert('Error', 'Enter a valid amount'); return; } }
     else { ti = parseFloat(intAmt) || 0; tp = parseFloat(prinAmt) || 0; if (ti <= 0 && tp <= 0) { Alert.alert('Error', 'Enter at least one amount'); return; } }
 
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(payDate)) { Alert.alert('Error', 'Enter date as YYYY-MM-DD'); return; }
+
     setSaving(true);
-    try { await addPayment(finance.id, { to_interest: ti, to_principal: tp }); navigation.goBack(); }
+    try { await addPayment(finance.id, { to_interest: ti, to_principal: tp, description: description.trim(), date: payDate }); navigation.goBack(); }
     catch (e: any) { Alert.alert('Error', e.message); }
     finally { setSaving(false); }
   };
@@ -52,7 +56,13 @@ export default function AddPaymentScreen({ route, navigation }: Props) {
           <View style={[styles.summaryRow, styles.summaryTotal]}><Text style={styles.summaryLabel}>Total Due</Text><Text style={[styles.summaryValue, { fontSize: 18 }]}>{fmt(finance.total_due)}</Text></View>
         </View>
 
-        <Text style={styles.sectionTitle}>Payment Type</Text>
+        <Text style={styles.label}>Payment Date</Text>
+        <TextInput style={styles.input} value={payDate} onChangeText={setPayDate} placeholder="YYYY-MM-DD" placeholderTextColor="#555" />
+
+        <Text style={styles.label}>Description (optional)</Text>
+        <TextInput style={styles.input} value={description} onChangeText={setDescription} placeholder="e.g. Cash payment, Bank transfer..." placeholderTextColor="#555" />
+
+        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Payment Type</Text>
         <View style={styles.typeRow}>
           {([{ k: 'interest' as PType, l: 'Interest Only' }, { k: 'principal' as PType, l: 'Principal Only' }, { k: 'both' as PType, l: 'Both' }]).map(o => (
             <TouchableOpacity key={o.k} style={[styles.typeBtn, ptype === o.k && styles.typeBtnActive]} onPress={() => { setPtype(o.k); setTotalAmt(''); setIntAmt(''); setPrinAmt(''); }}>

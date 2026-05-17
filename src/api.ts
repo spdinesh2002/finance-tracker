@@ -42,6 +42,7 @@ export type Payment = {
   amount: number;
   to_interest: number;
   to_principal: number;
+  description?: string;
 };
 
 export async function fetchFinances(status?: string): Promise<Finance[]> {
@@ -67,7 +68,7 @@ export async function createFinance(data: {
 
 export async function addPayment(
   financeId: string,
-  data: { to_interest: number; to_principal: number }
+  data: { to_interest: number; to_principal: number; description?: string; date?: string }
 ): Promise<Finance> {
   return request(`/finances/${financeId}/payments`, {
     method: 'POST',
@@ -95,7 +96,7 @@ export async function deleteFinanceRecord(id: string): Promise<void> {
 export async function updatePayment(
   financeId: string,
   paymentId: string,
-  data: { to_interest: number; to_principal: number }
+  data: { to_interest: number; to_principal: number; description?: string; date?: string }
 ): Promise<Finance> {
   return request(`/finances/${financeId}/payments/${paymentId}`, {
     method: 'PUT',

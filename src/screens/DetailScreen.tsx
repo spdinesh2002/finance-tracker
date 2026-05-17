@@ -89,6 +89,7 @@ export default function DetailScreen({ route, navigation }: Props) {
                   </TouchableOpacity>
                 </View>
               </View>
+              {p.description ? <Text style={styles.paymentDesc}>{p.description}</Text> : null}
               <View style={styles.paymentBreakdown}>
                 {p.to_interest > 0 && <Text style={styles.breakdownText}>Interest: {fmt(p.to_interest)}</Text>}
                 {p.to_principal > 0 && <Text style={styles.breakdownText}>Principal: {fmt(p.to_principal)}</Text>}
@@ -143,6 +144,7 @@ const styles = StyleSheet.create({
   paymentTotal: { color: '#fff', fontSize: 15, fontWeight: '700' },
   paymentBreakdown: { flexDirection: 'row', gap: 16 },
   breakdownText: { color: '#888', fontSize: 12 },
+  paymentDesc: { color: '#aaa', fontSize: 12, fontStyle: 'italic', marginBottom: 6 },
   payEditBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center' },
   payEditText: { color: '#4ecca3', fontSize: 14, fontWeight: '700' },
   payDeleteBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#2a1525', justifyContent: 'center', alignItems: 'center' },
