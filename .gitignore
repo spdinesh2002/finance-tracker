@@ -1,6 +1,6 @@
 node_modules/
 .expo/
-dist/
+# dist/ is committed for Render deployment
 npm-debug.*
 *.jks
 *.p8

@@ -2,7 +2,7 @@ services:
   - type: web
     name: finance-tracker
     runtime: node
-    buildCommand: npm install && npm run build:web
+    buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: NODE_ENV
