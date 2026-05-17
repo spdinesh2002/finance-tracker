@@ -61,7 +61,7 @@ app.get('/api/finances/:id', async (req, res) => {
 // ─── POST /api/finances ───
 app.post('/api/finances', async (req, res) => {
   try {
-    const { name, principal, interest_rate, period, debt_date } = req.body;
+    const { name, principal, interest_rate, period, debt_date, previous_interest = 0, interest_mode = 'auto' } = req.body;
 
     if (!name || !principal || !interest_rate || !period || !debt_date) {
       return res.status(400).json({ error: 'Missing required fields: name, principal, interest_rate, period, debt_date' });
@@ -73,11 +73,16 @@ app.post('/api/finances', async (req, res) => {
       return res.status(400).json({ error: 'Period must be weekly or monthly' });
     }
 
+    // interest_mode = 'auto': interest calculated from debt_date (last_interest_calc_date = debt_date, accrued = 0)
+    // interest_mode = 'manual': user provides previous_interest, new interest starts from today
+    const calcDate = interest_mode === 'manual' ? new Date().toISOString() : debt_date;
+    const accrued = interest_mode === 'manual' ? (previous_interest || 0) : 0;
+
     const id = genId();
     await db.execute({
-      sql: `INSERT INTO finances (id, name, original_principal, remaining_principal, interest_rate, period, debt_date, last_interest_calc_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [id, name.trim(), principal, principal, interest_rate, period, debt_date, debt_date],
+      sql: `INSERT INTO finances (id, name, original_principal, remaining_principal, interest_rate, period, debt_date, last_interest_calc_date, accrued_interest)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [id, name.trim(), principal, principal, interest_rate, period, debt_date, calcDate, accrued],
     });
 
     const created = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [id] });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -15,6 +16,19 @@ export type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+function HomeButton({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} style={hStyles.btn}>
+      <Text style={hStyles.text}>⌂ Home</Text>
+    </TouchableOpacity>
+  );
+}
+
+const hStyles = StyleSheet.create({
+  btn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#e94560' },
+  text: { color: '#fff', fontSize: 13, fontWeight: '700' },
+});
 
 export default function App() {
   return (
@@ -35,17 +49,26 @@ export default function App() {
         <Stack.Screen
           name="AddFinance"
           component={AddFinanceScreen}
-          options={{ title: 'New Finance Entry' }}
+          options={({ navigation }) => ({
+            title: 'New Finance Entry',
+            headerRight: () => <HomeButton onPress={() => navigation.navigate('Home')} />,
+          })}
         />
         <Stack.Screen
           name="Detail"
           component={DetailScreen}
-          options={{ title: 'Finance Details' }}
+          options={({ navigation }) => ({
+            title: 'Finance Details',
+            headerRight: () => <HomeButton onPress={() => navigation.navigate('Home')} />,
+          })}
         />
         <Stack.Screen
           name="AddPayment"
           component={AddPaymentScreen}
-          options={{ title: 'Record Payment' }}
+          options={({ navigation }) => ({
+            title: 'Record Payment',
+            headerRight: () => <HomeButton onPress={() => navigation.navigate('Home')} />,
+          })}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -59,6 +59,8 @@ export async function createFinance(data: {
   interest_rate: number;
   period: 'weekly' | 'monthly';
   debt_date: string;
+  previous_interest?: number;
+  interest_mode?: 'auto' | 'manual';
 }): Promise<Finance> {
   return request('/finances', { method: 'POST', body: JSON.stringify(data) });
 }
