@@ -28,6 +28,7 @@ export type Finance = {
   total_principal_paid: number;
   status: 'active' | 'closed';
   closed_date?: string;
+  description?: string;
   created_at: string;
   // Computed by server on-the-fly
   current_interest: number;
@@ -62,6 +63,7 @@ export async function createFinance(data: {
   debt_date: string;
   previous_interest?: number;
   interest_mode?: 'auto' | 'manual';
+  description?: string;
 }): Promise<Finance> {
   return request('/finances', { method: 'POST', body: JSON.stringify(data) });
 }
@@ -84,6 +86,7 @@ export async function updateFinance(
     period: 'weekly' | 'monthly';
     debt_date: string;
     remaining_principal: number;
+    description?: string;
   }
 ): Promise<Finance> {
   return request(`/finances/${id}`, { method: 'PUT', body: JSON.stringify(data) });

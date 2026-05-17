@@ -80,6 +80,7 @@ export default function HomeScreen({ navigation }: Props) {
                   <TouchableOpacity onPress={handleDelete} style={styles.deleteIcon}><Text style={styles.deleteIconText}>✕</Text></TouchableOpacity>
                 </View>
               </View>
+              {item.description ? <Text style={styles.cardDesc}>{item.description}</Text> : null}
               <View style={styles.cardRow}><Text style={styles.label}>Debt Date</Text><Text style={styles.value}>{fmtDate(item.debt_date)}</Text></View>
               <View style={styles.cardRow}><Text style={styles.label}>Remaining Principal</Text><Text style={styles.value}>{fmt(item.remaining_principal)}</Text></View>
               <View style={styles.cardRow}><Text style={styles.label}>Current Interest</Text><Text style={[styles.value, styles.interestText]}>{fmt(item.current_interest)}</Text></View>
@@ -106,6 +107,7 @@ const styles = StyleSheet.create({
   list: { padding: 16, paddingBottom: 100 },
   card: { backgroundColor: '#16213e', borderRadius: 12, padding: 16, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#e94560' },
   cardClosed: { borderLeftColor: '#4ecca3', opacity: 0.7 },
+  cardDesc: { color: '#888', fontSize: 12, fontStyle: 'italic', marginBottom: 10 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   name: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },

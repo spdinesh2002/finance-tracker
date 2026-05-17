@@ -31,7 +31,10 @@ export default function DetailScreen({ route, navigation }: Props) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.personName}>{finance.name}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.personName}>{finance.name}</Text>
+          {finance.description ? <Text style={styles.descriptionText}>{finance.description}</Text> : null}
+        </View>
         <View style={[styles.badge, closed ? styles.badgeClosed : styles.badgeActive]}><Text style={styles.badgeText}>{closed ? 'CLOSED' : 'ACTIVE'}</Text></View>
       </View>
       <View style={styles.totalCard}>
@@ -116,7 +119,8 @@ const styles = StyleSheet.create({
   content: { padding: 20, paddingBottom: 40 },
   emptyText: { color: '#888', textAlign: 'center', marginTop: 40, fontSize: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  personName: { color: '#fff', fontSize: 26, fontWeight: '700', flex: 1 },
+  personName: { color: '#fff', fontSize: 26, fontWeight: '700' },
+  descriptionText: { color: '#888', fontSize: 13, marginTop: 4, fontStyle: 'italic' },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
   badgeActive: { backgroundColor: '#e94560' },
   badgeClosed: { backgroundColor: '#4ecca3' },

@@ -21,6 +21,7 @@ export default function EditFinanceScreen({ route, navigation }: Props) {
   const [period, setPeriod] = useState<'weekly' | 'monthly'>('monthly');
   const [debtDate, setDebtDate] = useState('');
   const [remainingPrincipal, setRemainingPrincipal] = useState('');
+  const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function EditFinanceScreen({ route, navigation }: Props) {
         setPeriod(data.period);
         setDebtDate(data.debt_date.split('T')[0]);
         setRemainingPrincipal(String(data.remaining_principal));
+        setDescription(data.description || '');
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     })();
@@ -60,6 +62,7 @@ export default function EditFinanceScreen({ route, navigation }: Props) {
         period,
         debt_date: debtDate,
         remaining_principal: rp,
+        description: description.trim(),
       });
       navigation.goBack();
     } catch (e: any) { Alert.alert('Error', e.message); }
@@ -71,7 +74,8 @@ export default function EditFinanceScreen({ route, navigation }: Props) {
     rate !== String(finance.interest_rate) ||
     period !== finance.period ||
     debtDate !== finance.debt_date.split('T')[0] ||
-    remainingPrincipal !== String(finance.remaining_principal);
+    remainingPrincipal !== String(finance.remaining_principal) ||
+    description !== (finance.description || '');
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -96,6 +100,9 @@ export default function EditFinanceScreen({ route, navigation }: Props) {
 
         <Text style={styles.label}>Person Name</Text>
         <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Name" placeholderTextColor="#555" />
+
+        <Text style={styles.label}>Description (optional)</Text>
+        <TextInput style={styles.input} value={description} onChangeText={setDescription} placeholder="e.g. House loan, Business debt..." placeholderTextColor="#555" />
 
         <Text style={styles.label}>Debt Date</Text>
         <TextInput style={styles.input} value={debtDate} onChangeText={setDebtDate} placeholder="YYYY-MM-DD" placeholderTextColor="#555" />

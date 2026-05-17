@@ -61,7 +61,7 @@ app.get('/api/finances/:id', async (req, res) => {
 // ─── POST /api/finances ───
 app.post('/api/finances', async (req, res) => {
   try {
-    const { name, principal, interest_rate, period, debt_date, previous_interest = 0, interest_mode = 'auto' } = req.body;
+    const { name, principal, interest_rate, period, debt_date, previous_interest = 0, interest_mode = 'auto', description = '' } = req.body;
 
     if (!name || !principal || !interest_rate || !period || !debt_date) {
       return res.status(400).json({ error: 'Missing required fields: name, principal, interest_rate, period, debt_date' });
@@ -80,9 +80,9 @@ app.post('/api/finances', async (req, res) => {
 
     const id = genId();
     await db.execute({
-      sql: `INSERT INTO finances (id, name, original_principal, remaining_principal, interest_rate, period, debt_date, last_interest_calc_date, accrued_interest)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [id, name.trim(), principal, principal, interest_rate, period, debt_date, calcDate, accrued],
+      sql: `INSERT INTO finances (id, name, original_principal, remaining_principal, interest_rate, period, debt_date, last_interest_calc_date, accrued_interest, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [id, name.trim(), principal, principal, interest_rate, period, debt_date, calcDate, accrued, (description || '').trim()],
     });
 
     const created = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [id] });
@@ -173,7 +173,7 @@ app.put('/api/finances/:id', async (req, res) => {
 
     if (finance.status === 'closed') return res.status(400).json({ error: 'Cannot edit a closed record' });
 
-    const { name, interest_rate, period, debt_date, remaining_principal } = req.body;
+    const { name, interest_rate, period, debt_date, remaining_principal, description } = req.body;
 
     if (!name || !interest_rate || !period || !debt_date || remaining_principal === undefined) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -186,6 +186,8 @@ app.put('/api/finances/:id', async (req, res) => {
     const currentInterest = calculateCurrentInterest(finance);
     const now = new Date().toISOString();
 
+    const desc = description !== undefined ? (description || '').trim() : (finance.description || '');
+
     await db.execute({
       sql: `UPDATE finances SET
               name = ?,
@@ -194,7 +196,8 @@ app.put('/api/finances/:id', async (req, res) => {
               debt_date = ?,
               remaining_principal = ?,
               accrued_interest = ?,
-              last_interest_calc_date = ?
+              last_interest_calc_date = ?,
+              description = ?
             WHERE id = ?`,
       args: [
         name.trim(),
@@ -204,6 +207,7 @@ app.put('/api/finances/:id', async (req, res) => {
         remaining_principal,
         currentInterest,
         now,
+        desc,
         finance.id,
       ],
     });

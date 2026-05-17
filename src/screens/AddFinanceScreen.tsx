@@ -20,6 +20,7 @@ export default function AddFinanceScreen({ navigation }: Props) {
   const [rate, setRate] = useState('');
   const [period, setPeriod] = useState<'weekly' | 'monthly'>('monthly');
   const [debtDate, setDebtDate] = useState(getTodayString());
+  const [description, setDescription] = useState('');
   const [previousInterest, setPreviousInterest] = useState('');
   const [interestMode, setInterestMode] = useState<'auto' | 'manual'>('auto');
   const [saving, setSaving] = useState(false);
@@ -46,6 +47,7 @@ export default function AddFinanceScreen({ navigation }: Props) {
         debt_date: debtDate,
         previous_interest: interestMode === 'manual' ? prevInterest : 0,
         interest_mode: interestMode,
+        description: description.trim(),
       });
       navigation.goBack();
     } catch (e: any) { Alert.alert('Error', e.message); }
@@ -78,6 +80,9 @@ export default function AddFinanceScreen({ navigation }: Props) {
 
         <Text style={styles.label}>Person Name</Text>
         <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Enter name" placeholderTextColor="#555" />
+
+        <Text style={styles.label}>Description (optional)</Text>
+        <TextInput style={styles.input} value={description} onChangeText={setDescription} placeholder="e.g. House loan, Business debt..." placeholderTextColor="#555" />
 
         <Text style={styles.label}>Debt Date</Text>
         <TextInput style={styles.input} value={debtDate} onChangeText={setDebtDate} placeholder="YYYY-MM-DD" placeholderTextColor="#555" />

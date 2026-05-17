@@ -39,9 +39,14 @@ async function initDB() {
     )
   `);
 
-  // Migration: add description column if missing (existing tables)
+  // Migration: add description columns if missing (existing tables)
   try {
     await db.execute(`ALTER TABLE payments ADD COLUMN description TEXT DEFAULT ''`);
+  } catch (e) {
+    // Column already exists, ignore
+  }
+  try {
+    await db.execute(`ALTER TABLE finances ADD COLUMN description TEXT DEFAULT ''`);
   } catch (e) {
     // Column already exists, ignore
   }
