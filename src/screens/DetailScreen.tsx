@@ -50,9 +50,14 @@ export default function DetailScreen({ route, navigation }: Props) {
       </View>
 
       {!closed && (
-        <TouchableOpacity style={styles.payBtn} onPress={() => navigation.navigate('AddPayment', { id: finance.id })}>
-          <Text style={styles.payBtnText}>Record Payment</Text>
-        </TouchableOpacity>
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.payBtn} onPress={() => navigation.navigate('AddPayment', { id: finance.id })}>
+            <Text style={styles.payBtnText}>Record Payment</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('EditFinance', { id: finance.id })}>
+            <Text style={styles.editBtnText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       <View style={styles.historySection}>
@@ -104,8 +109,11 @@ const styles = StyleSheet.create({
   gridValue: { color: '#fff', fontSize: 16, fontWeight: '700' },
   interestColor: { color: '#e94560' },
   paidColor: { color: '#4ecca3' },
-  payBtn: { backgroundColor: '#4ecca3', borderRadius: 10, padding: 16, alignItems: 'center', marginBottom: 24 },
+  actionRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  payBtn: { flex: 1, backgroundColor: '#4ecca3', borderRadius: 10, padding: 16, alignItems: 'center' },
   payBtnText: { color: '#0f0f23', fontSize: 16, fontWeight: '700' },
+  editBtn: { backgroundColor: '#16213e', borderRadius: 10, padding: 16, alignItems: 'center', borderWidth: 2, borderColor: '#e94560', paddingHorizontal: 24 },
+  editBtnText: { color: '#e94560', fontSize: 16, fontWeight: '700' },
   historySection: { marginBottom: 24 },
   historyTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 12 },
   noPayments: { color: '#555', fontSize: 14, textAlign: 'center', padding: 20 },

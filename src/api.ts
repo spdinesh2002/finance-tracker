@@ -75,6 +75,19 @@ export async function addPayment(
   });
 }
 
+export async function updateFinance(
+  id: string,
+  data: {
+    name: string;
+    interest_rate: number;
+    period: 'weekly' | 'monthly';
+    debt_date: string;
+    remaining_principal: number;
+  }
+): Promise<Finance> {
+  return request(`/finances/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
 export async function deleteFinanceRecord(id: string): Promise<void> {
   return request(`/finances/${id}`, { method: 'DELETE' });
 }

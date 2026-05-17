@@ -163,6 +163,59 @@ app.post('/api/finances/:id/payments', async (req, res) => {
   }
 });
 
+// ─── PUT /api/finances/:id ───
+app.put('/api/finances/:id', async (req, res) => {
+  try {
+    const result = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [req.params.id] });
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    const finance = result.rows[0];
+
+    if (finance.status === 'closed') return res.status(400).json({ error: 'Cannot edit a closed record' });
+
+    const { name, interest_rate, period, debt_date, remaining_principal } = req.body;
+
+    if (!name || !interest_rate || !period || !debt_date || remaining_principal === undefined) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (interest_rate <= 0) return res.status(400).json({ error: 'Interest rate must be positive' });
+    if (remaining_principal < 0) return res.status(400).json({ error: 'Principal cannot be negative' });
+    if (!['weekly', 'monthly'].includes(period)) return res.status(400).json({ error: 'Period must be weekly or monthly' });
+
+    // Settle current interest before changing rate/period/date
+    const currentInterest = calculateCurrentInterest(finance);
+    const now = new Date().toISOString();
+
+    await db.execute({
+      sql: `UPDATE finances SET
+              name = ?,
+              interest_rate = ?,
+              period = ?,
+              debt_date = ?,
+              remaining_principal = ?,
+              accrued_interest = ?,
+              last_interest_calc_date = ?
+            WHERE id = ?`,
+      args: [
+        name.trim(),
+        interest_rate,
+        period,
+        debt_date,
+        remaining_principal,
+        currentInterest,
+        now,
+        finance.id,
+      ],
+    });
+
+    const updated = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [finance.id] });
+    const payments = await db.execute({ sql: 'SELECT * FROM payments WHERE finance_id = ? ORDER BY date DESC', args: [finance.id] });
+    res.json({ ...enrichWithInterest(updated.rows[0]), payments: payments.rows });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to update record' });
+  }
+});
+
 // ─── DELETE /api/finances/:id ───
 app.delete('/api/finances/:id', async (req, res) => {
   try {
