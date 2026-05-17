@@ -9,4 +9,5 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
+data/*.db
 .env

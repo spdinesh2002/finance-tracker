@@ -1,20 +1,23 @@
 {
   "name": "finance-tracker",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "build:web": "npx expo export --platform web",
+    "expo:start": "expo start"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.11.0",
+    "better-sqlite3": "^11.10.0",
+    "cors": "^2.8.6",
     "expo": "~51.0.39",
     "expo-status-bar": "~1.12.1",
+    "express": "^4.22.2",
     "react": "18.2.0",
     "react-dom": "^18.2.0",
     "react-native": "0.74.5",
@@ -27,5 +30,8 @@
     "@types/react": "~18.2.45",
     "typescript": "~5.3.3"
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
 }
