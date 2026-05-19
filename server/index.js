@@ -164,6 +164,52 @@ app.post('/api/finances/:id/payments', async (req, res) => {
   }
 });
 
+// ─── POST /api/finances/:id/settle ───
+app.post('/api/finances/:id/settle', async (req, res) => {
+  try {
+    const result = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [req.params.id] });
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Finance record not found' });
+    const finance = result.rows[0];
+
+    if (finance.status === 'closed') return res.status(400).json({ error: 'This record is already closed' });
+
+    const { description = '' } = req.body;
+    const currentInterest = calculateCurrentInterest(finance);
+    const remainingPrincipal = finance.remaining_principal;
+    const totalAmount = Math.round((currentInterest + remainingPrincipal) * 100) / 100;
+    const now = new Date().toISOString();
+    const paymentId = genId();
+
+    // Record the full settlement payment
+    await db.execute({
+      sql: `INSERT INTO payments (id, finance_id, date, amount, to_interest, to_principal, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [paymentId, finance.id, now, totalAmount, Math.round(currentInterest * 100) / 100, Math.round(remainingPrincipal * 100) / 100, (description || 'Settlement').trim()],
+    });
+
+    // Close the finance record
+    await db.execute({
+      sql: `UPDATE finances SET
+              remaining_principal = 0,
+              accrued_interest = 0,
+              last_interest_calc_date = ?,
+              total_interest_paid = total_interest_paid + ?,
+              total_principal_paid = total_principal_paid + ?,
+              status = 'closed',
+              closed_date = ?
+            WHERE id = ?`,
+      args: [now, Math.round(currentInterest * 100) / 100, Math.round(remainingPrincipal * 100) / 100, now, finance.id],
+    });
+
+    const updated = await db.execute({ sql: 'SELECT * FROM finances WHERE id = ?', args: [finance.id] });
+    const payments = await db.execute({ sql: 'SELECT * FROM payments WHERE finance_id = ? ORDER BY date DESC', args: [finance.id] });
+    res.json({ ...enrichWithInterest(updated.rows[0]), payments: payments.rows });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Settlement failed' });
+  }
+});
+
 // ─── PUT /api/finances/:id ───
 app.put('/api/finances/:id', async (req, res) => {
   try {

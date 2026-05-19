@@ -5,7 +5,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
-import { Finance, fetchFinance, deleteFinanceRecord, deletePayment } from '../api';
+import { Finance, fetchFinance, deleteFinanceRecord, deletePayment, settleFinance } from '../api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Detail'>;
 
@@ -53,14 +53,35 @@ export default function DetailScreen({ route, navigation }: Props) {
       </View>
 
       {!closed && (
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.payBtn} onPress={() => navigation.navigate('AddPayment', { id: finance.id })}>
-            <Text style={styles.payBtnText}>Record Payment</Text>
+        <>
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.payBtn} onPress={() => navigation.navigate('AddPayment', { id: finance.id })}>
+              <Text style={styles.payBtnText}>Record Payment</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('EditFinance', { id: finance.id })}>
+              <Text style={styles.editBtnText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.settleBtn} onPress={() => {
+            Alert.alert(
+              'Settle Account',
+              `Settle all dues for ${finance.name}?\n\nInterest: ${fmt(finance.current_interest)}\nPrincipal: ${fmt(finance.remaining_principal)}\n\nTotal: ${fmt(finance.total_due)}\n\nThis will record a full payment and close the record.`,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Settle', style: 'default', onPress: async () => {
+                  try {
+                    await settleFinance(finance.id, 'Full settlement');
+                    setLoading(true);
+                    setFinance(await fetchFinance(id));
+                    setLoading(false);
+                  } catch (e: any) { Alert.alert('Error', e.message); }
+                }},
+              ]
+            );
+          }}>
+            <Text style={styles.settleBtnText}>Settle Full Amount — {fmt(finance.total_due)}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('EditFinance', { id: finance.id })}>
-            <Text style={styles.editBtnText}>Edit</Text>
-          </TouchableOpacity>
-        </View>
+        </>
       )}
 
       <View style={styles.historySection}>
@@ -134,7 +155,9 @@ const styles = StyleSheet.create({
   gridValue: { color: '#fff', fontSize: 16, fontWeight: '700' },
   interestColor: { color: '#e94560' },
   paidColor: { color: '#4ecca3' },
-  actionRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  settleBtn: { backgroundColor: '#1a1a2e', borderRadius: 10, padding: 16, alignItems: 'center', marginBottom: 24, borderWidth: 2, borderColor: '#4ecca3' },
+  settleBtnText: { color: '#4ecca3', fontSize: 15, fontWeight: '700' },
+  actionRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
   payBtn: { flex: 1, backgroundColor: '#4ecca3', borderRadius: 10, padding: 16, alignItems: 'center' },
   payBtnText: { color: '#0f0f23', fontSize: 16, fontWeight: '700' },
   editBtn: { backgroundColor: '#16213e', borderRadius: 10, padding: 16, alignItems: 'center', borderWidth: 2, borderColor: '#e94560', paddingHorizontal: 24 },
